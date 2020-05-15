@@ -2,14 +2,10 @@
 const optimist = require('optimist');
 
 let argv = optimist
-  .usage('Usage: $0 --server [string] --subdomain [string] --hostname [string] --port [number]')
+  .usage('Usage: $0 --server [string] --hostname [string] --port [number]')
   .options('s', {
     alias: 'server',
     describe: '(Required) Tunnel server endpoint'
-  })
-  .options('sub', {
-    alias: 'subdomain',
-    describe: '(Required) Public URL the tunnel server is forwarding to us'
   })
   .options('h', {
     alias: 'hostname',
@@ -27,8 +23,8 @@ if (argv.help) {
   process.exit();
 }
 
-if (!argv['server'] || !argv['subdomain'] || !argv['port']) {
-  for (var key in ['server', 'subdomain', 'port']) {
+if (!argv['server'] || !argv['port']) {
+  for (var key in ['server', 'port']) {
     if (argv[key]) continue;
 
     console.log('Error: Required option, but nothing found');

@@ -1,7 +1,6 @@
 {
-  "author": "Eric Barch <ebarch@nooplabs.com>",
-  "name": "socket-tunnel",
-  "description": "Tunnel HTTP Connections via socket.io streams.",
+  "name": "heroku-local-tunnel",
+  "description": "Heroku local tunnel",
   "version": "1.0.0",
   "dependencies": {
     "is-valid-domain": "0.0.5",
@@ -11,6 +10,9 @@
     "socket.io-stream": "^0.9.1",
     "tldjs": "^2.3.1",
     "uuid": "^3.2.1"
+  },
+  "scripts": {
+    "start": "node ./bin/server"
   },
   "license": "MIT"
 }

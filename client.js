@@ -11,9 +11,8 @@ module.exports = (options) => {
 
     socket.on('connect', () => {
       console.log(new Date() + ': connected');
-      console.log(new Date() + ': requesting subdomain ' + options['subdomain'] + ' via ' + options['server']);
 
-      socket.emit('createTunnel', options['subdomain'], (err) => {
+      socket.emit('createTunnel', (err) => {
         if (err) {
           console.log(new Date() + ': [error] ' + err);
 
@@ -23,15 +22,15 @@ module.exports = (options) => {
 
           // clean and concat requested url
           let url;
-          let subdomain = options['subdomain'].toString();
+     
           let server = options['server'].toString();
 
           if (server.includes('https://')) {
-            url = `https://${subdomain}.${server.slice(8)}`;
+            url = `https://${server.slice(8)}`;
           } else if (server.includes('http://')) {
-            url = `http://${subdomain}.${server.slice(7)}`;
+            url = `http://${server.slice(7)}`;
           } else {
-            url = `https://${subdomain}.${server}`;
+            url = `https://${server}`;
           }
 
           // resolve promise with requested URL

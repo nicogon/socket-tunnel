@@ -9,7 +9,7 @@ module.exports = (options) => {
   const isValidDomain = require('is-valid-domain');
 
   // association between subdomains and socket.io sockets
-  let socketsBySubdomain = {};
+  let proxySocket;
 
   // bounce incoming http requests to socket.io
   let server = http.createServer(async (req, res) => {
@@ -75,39 +75,18 @@ module.exports = (options) => {
 
   function getTunnelClientStreamForReq (req) {
     return new Promise((resolve, reject) => {
-      // without a hostname, we won't know who the request is for
-      let hostname = req.headers.host;
-      if (!hostname) {
-        return reject(new Error('Invalid hostname'));
-      }
-
-      // make sure we received a subdomain
-      let subdomain = tldjs.getSubdomain(hostname).toLowerCase();
-      if (!subdomain) {
-        return reject(new Error('Invalid subdomain'));
-      }
-
-      // tldjs library return subdomain as all subdomain path from the main domain.
-      // Example:
-      // 1. super.example.com = super
-      // 2. my.super.example.com = my.super
-      // 3. If we are running the tunnel server on a subdomain, we must strip it from the provided hostname
-      if (options.subdomain) {
-        subdomain = subdomain.replace(`.${options.subdomain}`, '');
-      }
-
-      let subdomainSocket = socketsBySubdomain[subdomain];
-      if (!subdomainSocket) {
-        return reject(new Error(`${subdomain} is currently unregistered or offline.`));
-      }
-
+  
       if (req.connection.tunnelClientStream !== undefined && !req.connection.tunnelClientStream.destroyed && req.connection.subdomain === subdomain) {
         return resolve(req.connection.tunnelClientStream);
       }
 
       let requestGUID = uuid();
-      ss(subdomainSocket).once(requestGUID, (tunnelClientStream) => {
-        req.connection.subdomain = subdomain;
+
+      if(!proxySocket){
+        return reject(new Error(`Server is currently unregistered or offline.`));
+      }
+  
+      ss(proxySocket).once(requestGUID, (tunnelClientStream) => {
         req.connection.tunnelClientStream = tunnelClientStream;
 
         // Pipe all data from tunnel stream to requesting connection
@@ -116,7 +95,7 @@ module.exports = (options) => {
         resolve(tunnelClientStream);
       });
 
-      subdomainSocket.emit('incomingClient', requestGUID);
+      proxySocket.emit('incomingClient', requestGUID);
     });
   }
 
@@ -148,36 +127,9 @@ module.exports = (options) => {
   let io = require('socket.io')(server);
   io.on('connection', (socket) => {
     socket.on('createTunnel', (requestedName, responseCb) => {
-      if (socket.requestedName) {
-        // tunnel has already been created
-        return;
-      }
-
-      // domains are case insensitive
-      let reqNameNormalized = requestedName.toString().toLowerCase().replace(/[^0-9a-z-]/g, '');
-
-      // make sure the client is requesting a valid subdomain
-      if (reqNameNormalized.length === 0 || !isValidDomain(`${reqNameNormalized}.example.com`)) {
-        console.log(new Date() + ': ' + reqNameNormalized + ' -- bad subdomain. disconnecting client.');
-        if (responseCb) {
-          responseCb('bad subdomain');
-        }
-        return socket.disconnect();
-      }
-
-      // make sure someone else hasn't claimed this subdomain
-      if (socketsBySubdomain[reqNameNormalized]) {
-        console.log(new Date() + ': ' + reqNameNormalized + ' requested but already claimed. disconnecting client.');
-        if (responseCb) {
-          responseCb('subdomain already claimed');
-        }
-        return socket.disconnect();
-      }
-
       // store a reference to this socket by the subdomain claimed
-      socketsBySubdomain[reqNameNormalized] = socket;
-      socket.requestedName = reqNameNormalized;
-      console.log(new Date() + ': ' + reqNameNormalized + ' registered successfully');
+      proxySocket = socket;
+      console.log(new Date() + ' registered successfully');
 
       if (responseCb) {
         responseCb(null);
@@ -186,10 +138,8 @@ module.exports = (options) => {
 
     // when a client disconnects, we need to remove their association
     socket.on('disconnect', () => {
-      if (socket.requestedName) {
-        delete socketsBySubdomain[socket.requestedName];
+        proxySocket = null;
         console.log(new Date() + ': ' + socket.requestedName + ' unregistered');
-      }
     });
   });
 
