@@ -8,7 +8,6 @@ module.exports = (options) => {
   const uuid = require('uuid/v4');
   const isValidDomain = require('is-valid-domain');
 
-  // association between subdomains and socket.io sockets
   let proxySocket;
 
   // bounce incoming http requests to socket.io
@@ -46,37 +45,10 @@ module.exports = (options) => {
     });
   });
 
-  // HTTP upgrades (i.e. websockets) are NOT currently supported because socket.io relies on them
-  // server.on('upgrade', (req, socket, head) => {
-  //   getTunnelClientStreamForReq(req).then((tunnelClientStream) => {
-  //     tunnelClientStream.on('error', () => {
-  //       req.destroy();
-  //       socket.destroy();
-  //       tunnelClientStream.destroy();
-  //     });
-
-  //     // get the upgrade request and send it to the tunnel client
-  //     let messageParts = getHeaderPartsForReq(req);
-
-  //     messageParts.push(''); // Push delimiter
-
-  //     let message = messageParts.join('\r\n');
-  //     tunnelClientStream.write(message);
-
-  //     // pipe data between ingress socket and tunnel client
-  //     tunnelClientStream.pipe(socket).pipe(tunnelClientStream);
-  //   }).catch((subdomainErr) => {
-  //     // if we get an invalid subdomain, this socket is most likely being handled by the root socket.io server
-  //     if (!subdomainErr.message.includes('Invalid subdomain')) {
-  //       socket.end();
-  //     }
-  //   });
-  // });
-
   function getTunnelClientStreamForReq (req) {
     return new Promise((resolve, reject) => {
   
-      if (req.connection.tunnelClientStream !== undefined && !req.connection.tunnelClientStream.destroyed && req.connection.subdomain === subdomain) {
+      if (req.connection.tunnelClientStream !== undefined && !req.connection.tunnelClientStream.destroyed) {
         return resolve(req.connection.tunnelClientStream);
       }
 
