@@ -12,9 +12,11 @@ module.exports = (options) => {
 
   // bounce incoming http requests to socket.io
   let server = http.createServer(async (req, res) => {
+    const start = new Date();
+    console.log("NEW TUNNEL")
     getTunnelClientStreamForReq(req).then((tunnelClientStream) => {
-      const start = new Date();
-      console.log("NEW TUNNEL")
+      const end2 = new Date() - start;
+      console.info('Execution time pre: %dms', end2)
       const reqBodyChunks = [];
 
       req.on('error', (err) => {
@@ -94,10 +96,10 @@ module.exports = (options) => {
 
   function streamResponse (reqLine, headers, reqBody, tunnelClientStream) {
     tunnelClientStream.write(reqLine);
-    console.log(reqLine)
+   // console.log(reqLine)
     tunnelClientStream.write('\r\n');
     tunnelClientStream.write(headers.join('\r\n'));
-    console.log(headers.join('\r\n'))
+   // console.log(headers.join('\r\n'))
     tunnelClientStream.write('\r\n\r\n');
     if (reqBody) {
       tunnelClientStream.write(reqBody);
