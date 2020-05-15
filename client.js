@@ -7,7 +7,9 @@ module.exports = (options) => {
     // require the things we need
     const net = require('net');
     const ss = require('socket.io-stream');
-    let socket = require('socket.io-client')(options['server']);
+    let socket = require('socket.io-client')(options['server'],{
+      transports: ['websocket']
+    });
 
     socket.on('connect', () => {
       console.log(new Date() + ': connected');

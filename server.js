@@ -34,13 +34,15 @@ module.exports = (options) => {
         if (req.complete) {
           const reqLine = getReqLineFromReq(req);
           const headers = getHeadersFromReq(req);
-
+      //    res.setHeader('')
           let reqBody = null;
           if (reqBodyChunks.length > 0) {
             reqBody = Buffer.concat(reqBodyChunks);
           }
 
           streamResponse(reqLine, headers, reqBody, tunnelClientStream);
+
+        //  res.end();
           const end = new Date() - start;
           console.info('eeeExecution time: %dms', end);
           tunnelClientStream.on('end', ()=>  console.info('Execution time stream: %dms', new Date() - start))
@@ -107,12 +109,18 @@ module.exports = (options) => {
       tunnelClientStream.write(reqBody);
     }
 
+    console.log(reqBody)
+
+   // reqBody.end();
+
    
     //console.log(tunnelClientStream);
   }
 
   // socket.io instance
-  let io = require('socket.io')(server);
+  let io = require('socket.io')(server,{
+    transports: ['websocket']
+  });
   io.on('connection', (socket) => {
     socket.on('createTunnel', (requestedName, responseCb) => {
       // store a reference to this socket by the subdomain claimed
