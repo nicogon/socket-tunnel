@@ -42,7 +42,9 @@ module.exports = (options) => {
 
           streamResponse(reqLine, headers, reqBody, tunnelClientStream);
           const end = new Date() - start;
-          console.info('Execution time: %dms', end)
+        
+          tunnelClientStream.on('end', ()=>  console.info('Execution time stream: %dms', new Date() - start))
+
         }
       });
     }).catch((subdomainErr) => {
@@ -104,6 +106,9 @@ module.exports = (options) => {
     if (reqBody) {
       tunnelClientStream.write(reqBody);
     }
+
+   
+    //console.log(tunnelClientStream);
   }
 
   // socket.io instance
