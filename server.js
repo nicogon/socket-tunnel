@@ -13,6 +13,8 @@ module.exports = (options) => {
   // bounce incoming http requests to socket.io
   let server = http.createServer(async (req, res) => {
     getTunnelClientStreamForReq(req).then((tunnelClientStream) => {
+      const start = new Date();
+      console.log("NEW TUNNEL")
       const reqBodyChunks = [];
 
       req.on('error', (err) => {
@@ -37,6 +39,8 @@ module.exports = (options) => {
           }
 
           streamResponse(reqLine, headers, reqBody, tunnelClientStream);
+          const end = new Date() - start;
+          console.info('Execution time: %dms', end)
         }
       });
     }).catch((subdomainErr) => {
@@ -47,6 +51,8 @@ module.exports = (options) => {
 
   function getTunnelClientStreamForReq (req) {
     return new Promise((resolve, reject) => {
+      const start = new Date();
+      console.log("NEW CLIENT")
   
       if (req.connection.tunnelClientStream !== undefined && !req.connection.tunnelClientStream.destroyed) {
         return resolve(req.connection.tunnelClientStream);
@@ -63,7 +69,8 @@ module.exports = (options) => {
 
         // Pipe all data from tunnel stream to requesting connection
         tunnelClientStream.pipe(req.connection);
-
+        const end = new Date() - start;
+        console.info('Execution time CLIENT: %dms', end)
         resolve(tunnelClientStream);
       });
 
@@ -87,8 +94,10 @@ module.exports = (options) => {
 
   function streamResponse (reqLine, headers, reqBody, tunnelClientStream) {
     tunnelClientStream.write(reqLine);
+    console.log(reqLine)
     tunnelClientStream.write('\r\n');
     tunnelClientStream.write(headers.join('\r\n'));
+    console.log(headers.join('\r\n'))
     tunnelClientStream.write('\r\n\r\n');
     if (reqBody) {
       tunnelClientStream.write(reqBody);
