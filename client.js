@@ -36,7 +36,7 @@ module.exports = (options) => {
           }
 
           // resolve promise with requested URL
-          resolve(url);
+          resolve(socket);
         }
       });
     });
