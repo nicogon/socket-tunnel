@@ -13,6 +13,7 @@ module.exports = (options) => {
 
     socket.on('connect', () => {
       console.log(new Date() + ': connected');
+      resolve(socket);
 
       socket.emit('createTunnel', (err) => {
         if (err) {
@@ -34,14 +35,12 @@ module.exports = (options) => {
           } else {
             url = `https://${server}`;
           }
-
-          // resolve promise with requested URL
-          resolve(socket);
         }
       });
     });
 
     socket.on('incomingClient', (clientId) => {
+      console.log("incoming")
       let client = net.connect(options['port'], options['hostname'], () => {
         let s = ss.createStream();
         s.pipe(client).pipe(s);
